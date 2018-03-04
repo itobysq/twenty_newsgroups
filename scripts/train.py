@@ -9,6 +9,7 @@ import data_helpers
 import classifier_helpers as ch
 from text_cnn import TextCNN
 from tensorflow.contrib import learn
+from sklearn.model_selection import train_test_split
 
 # Parameters
 # ==================================================
@@ -54,7 +55,10 @@ y = np.vstack(((train.target), (1-train.target))).T
 
 # Build vocabulary
 max_document_length = max([len(x) for x in x_text])
-x_text_flat = [x for sublist in x_text for x in sublist]
+x_text_flat = []
+for sentence in x_text:
+    sentence_as_list_item = ' '.join(sentence)
+    x_text_flat.append(sentence_as_list_item)
 vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
 x = np.array(list(vocab_processor.fit_transform(x_text_flat)))
 
@@ -64,12 +68,9 @@ shuffle_indices = np.random.permutation(np.arange(len(y)))
 x_shuffled = x[shuffle_indices]
 y_shuffled = y[shuffle_indices]
 
-import ipdb; ipdb.set_trace() # BREAKPOINT
 # Split train/test set
-# TODO: This is very crude, should use cross-validation
-dev_sample_index = -1 * int(FLAGS.dev_sample_percentage * float(len(y)))
-x_train, x_dev = x_shuffled[:dev_sample_index], x_shuffled[dev_sample_index:]
-y_train, y_dev = y_shuffled[:dev_sample_index], y_shuffled[dev_sample_index:]
+x_train, x_dev, y_train, y_dev = train_test_split(x, y,
+                                        test_size=FLAGS.dev_sample_percentage, random_state=42)
 
 del x, y, x_shuffled, y_shuffled
 
