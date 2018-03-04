@@ -84,7 +84,6 @@ with tf.Graph().as_default():
       allow_soft_placement=FLAGS.allow_soft_placement,
       log_device_placement=FLAGS.log_device_placement)
     sess = tf.Session(config=session_conf)
-    import ipdb; ipdb.set_trace() # BREAKPOINT
     with sess.as_default():
         cnn = TextCNN(
             sequence_length=x_train.shape[1],
