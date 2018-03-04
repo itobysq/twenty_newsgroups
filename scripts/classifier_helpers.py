@@ -1,7 +1,8 @@
 import numpy as np
 import nltk
 from nltk import word_tokenize
-from nltk.stem import WordNetLemmatizer
+from nltk.stem.wordnet import WordNetLemmatizer
+from nltk.corpus import stopwords
 import gensim
 import re
 from sklearn.datasets import fetch_20newsgroups
@@ -17,6 +18,19 @@ class LemmaTokenizer(object):
     def __call__(self, doc):
          return [self.wnl.lemmatize(t) for t in word_tokenize(doc)]
 
+def lemmatize_strip(docs):
+    corpus_words = []
+    wnl = WordNetLemmatizer()
+    for session in docs:
+        words = word_tokenize(session)
+        session_words = []
+        for _ in words:
+            word = _.lower()
+            regex_match = re.match(r"\b[a-zA-Z]+\b", word)
+            if (regex_match is not None) & (len(word) > 1) & (word not in stopwords.words('english')):
+                session_words.append(wnl.lemmatize(word))
+        corpus_words.append(session_words)
+    return corpus_words
 
 def build_model(size, docs):
     """
@@ -27,15 +41,7 @@ def build_model(size, docs):
     Returns:
         model (gensim.model): The word2vec model
     """
-    corpus_words = []
-    for session in docs:
-        words = word_tokenize(session)
-        session_words = []
-        for word in words:
-            regex_match = re.match(r"\b[a-zA-Z]+\b", word)
-            if (regex_match is not None) & (len(word) > 1) & (word not in stopwords):
-                session_words.append(wnl.lemmatize(word.lower()))
-        corpus_words.append(session_words)
+    corpus_words = lemmatize_strip(docs)
     model = gensim.models.Word2Vec(corpus_words, size=size, window=5, seed=42,
                                 min_count=2, workers=4)
     return model
@@ -66,6 +72,14 @@ def average_docs(data, model, vec_length=5):
         email_vector = average_vectors(email, w2v, vec_length)
         vectors.append(email_vector)
     return vectors
+
+def doc_to_image(data, model, vec_length=5, word_ceiling=100):
+    """
+    Constructs a 2d array for each document
+    """
+    w2v = dict(zip(model.index2word, model.vectors))
+    
+    raise NotImplementedError
 
 def average_vectors(word_list, word2vec_dict, vec_length=5):
     """
